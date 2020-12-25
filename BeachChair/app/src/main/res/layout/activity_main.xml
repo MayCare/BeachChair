@@ -21,19 +21,34 @@
         app:titleTextColor="@android:color/background_light" />
 
     <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="200dp"
-        android:layout_height="300dp"
-        android:layout_marginTop="24dp"
-        android:background="@color/colorOff"
-        android:contentDescription="Visual LED"
-        android:scaleType="centerCrop"
+        android:id="@+id/imageLogo"
+        android:layout_width="300dp"
+        android:layout_height="150dp"
+        android:scaleType="fitCenter"
+        android:layout_marginTop="30dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toolbar"
-        app:srcCompat="@mipmap/ic_launcher"
-        tools:ignore="VectorDrawableCompat" />
+        android:src="@drawable/makerzlogo"
+        android:visibility="visible"
+        >
+    </ImageView>
+
+<!--    <ImageView-->
+<!--        android:id="@+id/imageView"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginTop="24dp"-->
+<!--        android:background="@color/colorOn"-->
+<!--        android:contentDescription="Logo"-->
+<!--        android:scaleType="fitCenter"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintHorizontal_bias="0.5"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/toolbar"-->
+<!--        app:srcCompat="@mipmap/makerz_logo"-->
+<!--        tools:ignore="VectorDrawableCompat" />-->
 
     <Button
         android:id="@+id/buttonConnect"
@@ -47,17 +62,69 @@
         app:layout_constraintTop_toTopOf="@+id/toolbar" />
 
     <Button
-        android:id="@+id/buttonToggle"
+        android:id="@+id/buttonForward"
         style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="400dp"
-        android:text="Turn On"
+        android:text="Forward"
         android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/buttonPlus"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="450dp"
+        android:text="+"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toStartOf="@id/buttonForward"
+        app:layout_constraintHorizontal_bias="0.3"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/buttonStop"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="450dp"
+        android:text="STOP"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toStartOf="@id/buttonMinus"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@id/buttonPlus"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/buttonMinus"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="450dp"
+        android:text="-"
+        android:textSize="24sp"
+        app:layout_constraintStart_toEndOf="@id/buttonForward"
+        app:layout_constraintHorizontal_bias="0.3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/buttonBack"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:text="Backward"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonForward" />
 
     <ProgressBar
         android:id="@+id/progressBar"
