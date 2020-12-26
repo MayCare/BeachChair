@@ -6,8 +6,11 @@ import androidx.appcompat.widget.Toolbar;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -15,7 +18,6 @@ import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -30,6 +32,14 @@ import java.util.UUID;
 import static android.content.ContentValues.TAG;
 
 public class MainActivity extends AppCompatActivity {
+    private static Button mButtonConnect;
+    private static Toolbar mToolbar;
+    private static Button mBtnForward;
+    private static Button mBtnBackward;
+    private static Button mBtnStop;
+    private static Button mBtnPlus;
+    private static Button mBtnMinus;
+
 
     private String deviceName = null;
     private String deviceAddress;
@@ -44,31 +54,52 @@ public class MainActivity extends AppCompatActivity {
     Timer mTimerKeepAlive;
     TimerTask mTimerTaskKeepAlive;
 
+    //The BroadcastReceiver that listens for bluetooth broadcasts
+    private final BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+
+            if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
+                 //Device is now connected
+                onDeviceConnected();
+            }
+            else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+                 //Device has disconnected
+                onDeviceDisconnected();
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         // UI Initialization
-        final Button buttonConnect = findViewById(R.id.buttonConnect);
-        final Toolbar toolbar = findViewById(R.id.toolbar);
+        mButtonConnect = findViewById(R.id.buttonConnect);
+        mToolbar = findViewById(R.id.toolbar);
         final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
         final TextView textViewInfo = findViewById(R.id.textViewInfo);
 
-        final Button btnForward = findViewById(R.id.buttonForward);
-        btnForward.setEnabled(false);
-        final Button btnBackward = findViewById(R.id.buttonBack);
-        btnBackward.setEnabled(false);
-        final Button btnPlus = findViewById(R.id.buttonPlus);
-        btnPlus.setEnabled(false);
-        final Button btnMinus = findViewById(R.id.buttonMinus);
-        btnMinus.setEnabled(false);
-        final Button btnStop = findViewById(R.id.buttonStop);
-        btnStop.setEnabled(false);
+        mBtnForward = findViewById(R.id.buttonForward);
+        mBtnForward.setEnabled(false);
+        mBtnBackward = findViewById(R.id.buttonBack);
+        mBtnBackward.setEnabled(false);
+        mBtnPlus = findViewById(R.id.buttonPlus);
+        mBtnPlus.setEnabled(false);
+        mBtnMinus = findViewById(R.id.buttonMinus);
+        mBtnMinus.setEnabled(false);
+        mBtnStop = findViewById(R.id.buttonStop);
+        mBtnStop.setEnabled(false);
 
-        //final ImageView imageView = findViewById(R.id.imageView);
-        //imageView.setBackgroundColor(getResources().getColor(R.color.colorOff));
+        //listen to connectivity
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        this.registerReceiver(mBluetoothReceiver, filter);
 
         // If a bluetooth device has been selected from SelectDeviceActivity
         deviceName = getIntent().getStringExtra("deviceName");
@@ -77,9 +108,9 @@ public class MainActivity extends AppCompatActivity {
             //MAC address
             deviceAddress = getIntent().getStringExtra("deviceAddress");
             // Show progree and connection status
-            toolbar.setSubtitle("Connecting to " + deviceName + "...");
+            mToolbar.setSubtitle("Connecting to " + deviceName + "...");
             progressBar.setVisibility(View.VISIBLE);
-            buttonConnect.setEnabled(false);
+            mButtonConnect.setEnabled(false);
 
             /*
             This is the most important piece of code. When "deviceName" is found
@@ -102,20 +133,20 @@ public class MainActivity extends AppCompatActivity {
                         switch(msg.arg1){
                             case 1:
                                 //ON CONNECTED
-                                toolbar.setSubtitle("Connected to " + deviceName);
+                                mToolbar.setSubtitle("Connected to " + deviceName);
                                 progressBar.setVisibility(View.GONE);
-                                buttonConnect.setEnabled(true);
-                                btnForward.setEnabled(true);
-                                btnBackward.setEnabled(true);
-                                btnPlus.setEnabled(true);
-                                btnMinus.setEnabled(true);
-                                btnStop.setEnabled(true);
+                                mButtonConnect.setEnabled(true);
+                                mBtnForward.setEnabled(true);
+                                mBtnBackward.setEnabled(true);
+                                mBtnPlus.setEnabled(true);
+                                mBtnMinus.setEnabled(true);
+                                mBtnStop.setEnabled(true);
                                 startTimer();
                                 break;
                             case -1:
-                                toolbar.setSubtitle("Device fails to connect");
+                                mToolbar.setSubtitle("Device fails to connect");
                                 progressBar.setVisibility(View.GONE);
-                                buttonConnect.setEnabled(true);
+                                mButtonConnect.setEnabled(true);
                                 stopTimerTask();
                                 break;
                         }
@@ -125,11 +156,9 @@ public class MainActivity extends AppCompatActivity {
                         String arduinoMsg = msg.obj.toString(); // Read message from Arduino
                         switch (arduinoMsg.toLowerCase()){
                             case "led is turned on":
-                                //imageView.setBackgroundColor(getResources().getColor(R.color.colorOn));
                                 textViewInfo.setText("Arduino Message : " + arduinoMsg);
                                 break;
                             case "led is turned off":
-                                //imageView.setBackgroundColor(getResources().getColor(R.color.colorOff));
                                 textViewInfo.setText("Arduino Message : " + arduinoMsg);
                                 break;
                         }
@@ -139,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
         };
 
         // Select Bluetooth Device
-        buttonConnect.setOnClickListener(new View.OnClickListener() {
+        mButtonConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Move to adapter list
@@ -149,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // send commands from the Button to Arduino Board
-        btnStop.setOnClickListener(new View.OnClickListener() {
+        mBtnStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String cmdText = null;
@@ -159,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnForward.setOnClickListener(new View.OnClickListener() {
+        mBtnForward.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String cmdText = null;
@@ -169,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnBackward.setOnClickListener(new View.OnClickListener() {
+        mBtnBackward.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String cmdText = null;
@@ -179,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnPlus.setOnClickListener(new View.OnClickListener() {
+        mBtnPlus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String cmdText = null;
@@ -189,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnMinus.setOnClickListener(new View.OnClickListener() {
+        mBtnMinus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String cmdText = null;
@@ -199,6 +228,26 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    void onDeviceConnected() {
+        mToolbar.setSubtitle("Connected to " + deviceName);
+        mButtonConnect.setEnabled(true);
+        mBtnForward.setEnabled(true);
+        mBtnBackward.setEnabled(true);
+        mBtnPlus.setEnabled(true);
+        mBtnMinus.setEnabled(true);
+        mBtnStop.setEnabled(true);
+    }
+
+    void onDeviceDisconnected() {
+        mToolbar.setSubtitle("Not connected");
+        mButtonConnect.setEnabled(true);
+        mBtnForward.setEnabled(false);
+        mBtnBackward.setEnabled(false);
+        mBtnPlus.setEnabled(false);
+        mBtnMinus.setEnabled(false);
+        mBtnStop.setEnabled(false);
     }
 
     /* ============================ Thread to Create Bluetooth Connection =================================== */
