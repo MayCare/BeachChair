@@ -23,6 +23,8 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import static android.content.ContentValues.TAG;
@@ -38,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
 
     private final static int CONNECTING_STATUS = 1; // used in bluetooth handler to identify message status
     private final static int MESSAGE_READ = 2; // used in bluetooth handler to identify message update
+
+    Timer mTimerKeepAlive;
+    TimerTask mTimerTaskKeepAlive;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         deviceName = getIntent().getStringExtra("deviceName");
         if (deviceName != null){
             // Get the device address to make BT Connection
+            //MAC address
             deviceAddress = getIntent().getStringExtra("deviceAddress");
             // Show progree and connection status
             toolbar.setSubtitle("Connecting to " + deviceName + "...");
@@ -95,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
                     case CONNECTING_STATUS:
                         switch(msg.arg1){
                             case 1:
+                                //ON CONNECTED
                                 toolbar.setSubtitle("Connected to " + deviceName);
                                 progressBar.setVisibility(View.GONE);
                                 buttonConnect.setEnabled(true);
@@ -103,11 +110,13 @@ public class MainActivity extends AppCompatActivity {
                                 btnPlus.setEnabled(true);
                                 btnMinus.setEnabled(true);
                                 btnStop.setEnabled(true);
+                                startTimer();
                                 break;
                             case -1:
                                 toolbar.setSubtitle("Device fails to connect");
                                 progressBar.setVisibility(View.GONE);
                                 buttonConnect.setEnabled(true);
+                                stopTimerTask();
                                 break;
                         }
                         break;
@@ -335,5 +344,43 @@ public class MainActivity extends AppCompatActivity {
         a.addCategory(Intent.CATEGORY_HOME);
         a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(a);
+    }
+
+    /* ============================ Keep Alive msg ====================== */
+    public void startTimer() {
+        //set a new Timer
+        mTimerKeepAlive = new Timer();
+
+        //initialize the TimerTask's job
+        initializeTimerTask();
+
+        //schedule the timer, after the first 5000ms the TimerTask will run every 10000ms
+        mTimerKeepAlive.schedule(mTimerTaskKeepAlive, 0, 2000); //
+    }
+
+    public void stopTimerTask() {
+        //stop the timer, if it's not already null
+        if (mTimerKeepAlive != null) {
+            mTimerKeepAlive.cancel();
+            mTimerKeepAlive = null;
+        }
+    }
+
+    public void initializeTimerTask() {
+        mTimerTaskKeepAlive = new TimerTask() {
+            public void run() {
+                //use a handler to run periodic task
+                handler.post(new Runnable() {
+                    public void run() {
+                        //do somthing
+                        Log.d("Main", "keep alive");
+                        String cmdText = null;
+                        cmdText = "9";
+                        // Send command to Arduino board
+                        connectedThread.write(cmdText);
+                    }
+                });
+            }
+        };
     }
 }
